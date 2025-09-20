@@ -13,18 +13,21 @@ from geopy.exc import GeocoderServiceError, GeocoderTimedOut
 from geopy.geocoders import Nominatim
 from pydantic import BaseModel, Field
 
-from .mcp_utils import mcp
+from .mcp_utils import get_current_token, mcp
 
 # -------------------------------- Globals --------------------------------
 load_dotenv()
-strava_api_key = os.getenv("STRAVA_ACCESS_TOKEN")
-ors_api_key = os.getenv("ORS_KEY")
-if not strava_api_key:
-    print("Error: STRAVA_ACCESS_TOKEN not found in .env file")
-    exit(1)
 
-client_strava = stravalib.Client(access_token=strava_api_key)
+ors_api_key = os.getenv("ORS_KEY")
 client_ors = openrouteservice.Client(key=ors_api_key)
+
+
+def get_strava_client():
+    """Get authenticated Strava client."""
+    token = get_current_token()
+    if not token:
+        raise Exception("No Strava access token available. Please authenticate first.")
+    return stravalib.Client(access_token=token)
 
 
 class Coordinates(BaseModel):
@@ -53,6 +56,7 @@ def get_user_stats() -> str:
         str: JSON string containing user stats including total distance,
             activity count, and performance metrics.
     """
+    client_strava = get_strava_client()
     athlete_id = client_strava.get_athlete().id  # APi call
     ahtlete_stats = client_strava.get_athlete_stats(athlete_id)
     dict = {
@@ -78,6 +82,7 @@ def get_last_runs() -> str:
     text_result: str = ""
 
     # Get the last 10 runs
+    client_strava = get_strava_client()
     activities = client_strava.get_activities(limit=2)
 
     # Extract the data from the activities
@@ -260,6 +265,7 @@ def figures_speed_hr_by_activity(
     - fig_speed : speed curve (blue) as a function of time (s)
     Create a separate figure for each metric (no subplots).
     """
+    client_strava = get_strava_client()
     activities = client_strava.get_activities(limit=number_of_activity)
 
     for act in activities:

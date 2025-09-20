@@ -23,6 +23,9 @@ dependencies = [
     # Core MCP framework
     "fastmcp>=2.12.3",
     "pydantic>=2.11.9",
+    # OAuth for MCP
+    "mcpauth>=0.1.0",
+    "flask>=3.0.0",
     # API clients
     "stravalib>=2.4",
     "openrouteservice>=2.3.3",
